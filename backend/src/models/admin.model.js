@@ -4,11 +4,13 @@ const adminSchema = new mongoose.Schema({
     username:{
         type:String,
         required:true,
+        minlength:3,
     },
     email:{
         type:String,
         required:true,
-        unique:true
+        unique:true,
+        minlength:6
     },
     password:{type:String,
         required:true
@@ -17,7 +19,12 @@ const adminSchema = new mongoose.Schema({
         type:String,
         enum:['volunteer','admin'],
         default:'admin'
-    }
+    },
+    status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected', 'under-review'],
+    default: 'pending'
+}
 })
 
 const Admin = mongoose.model('Admin',adminSchema)
