@@ -47,16 +47,20 @@ const createVolunteer = async (req, res) => {
         })
 
 
-    await transporter.sendMail({
-  from: process.env.EMAIL,
-  to: email,
-  subject: "Volunteer Registration Successful",
-  html: `
-    <h2>Hello ${username},</h2>
-    <p>Thank you for registering as a volunteer.</p>
-    <p>We will review your application and contact you soon.</p>
-  `
-});
+        try {
+            await transporter.sendMail({
+                from: process.env.EMAIL,
+                to: email,
+                subject: "Volunteer Registration Successful",
+                html: `
+                    <h2>Hello ${username},</h2>
+                    <p>Thank you for registering as a volunteer.</p>
+                    <p>We will review your application and contact you soon.</p>
+                `
+            });
+        } catch (emailError) {
+            console.error("Failed to send volunteer welcome email:", emailError.message);
+        }
 
 
 
@@ -107,7 +111,51 @@ const loginVolunteer = async (req,res)=>{
 
 
 
-    module.exports ={
-    createVolunteer,
-    loginVolunteer
+const getProfile = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(404).json({ message: 'User profile not found' });
+        }
+        res.status(200).json({
+            message: 'Profile retrieved successfully',
+            user: req.user
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'Error fetching profile',
+            error: error.message
+        });
     }
+};
+
+const updateProfile = async (req, res) => {
+    const { username, phone, skills, address, interests } = req.body;
+    try {
+        if (!req.user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        const updatedVolunteer = await Volunteer.findByIdAndUpdate(
+            req.user._id,
+            { username, phone, skills, address, interests },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        res.status(200).json({
+            message: 'Profile updated successfully',
+            user: updatedVolunteer
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'Error updating profile',
+            error: error.message
+        });
+    }
+};
+
+module.exports = {
+    createVolunteer,
+    loginVolunteer,
+    getProfile,
+    updateProfile
+}
