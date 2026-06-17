@@ -17,7 +17,7 @@ const Login = () => {
     const [errors, setErrors] = useState({});
 
     // Retrieve redirect path from router state
-    const from = location.state?.from?.pathname || (role === 'admin' ? '/admin' : '/profile');
+    const from = location.state?.from?.pathname || (role === 'admin' ? '/admin' : '/dashboard');
 
     const validateForm = () => {
         const tempErrors = {};
@@ -44,12 +44,12 @@ const Login = () => {
         setLoading(true);
         const res = await login(email, password, role);
         setLoading(false);
-
+navigate('/dashboard');
         if (res.success) {
             addToast(`Welcome back, ${res.user.username}!`, 'success');
             // Check where to redirect
-            const redirectPath = role === 'admin' ? '/admin' : '/profile';
-            navigate(redirectPath);
+            const redirectPath = role === 'admin' ? '/admin' : '/dashboard';
+            
         } else {
             addToast(res.message, 'error');
         }

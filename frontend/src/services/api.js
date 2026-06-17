@@ -1,16 +1,20 @@
 import axios from 'axios';
 
+
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 10000,
 });
 
 // Request Interceptor to dynamically inject the JWT bearer token
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
+        // Ensure headers object exists before assigning
+        config.headers = config.headers || {};
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
         }

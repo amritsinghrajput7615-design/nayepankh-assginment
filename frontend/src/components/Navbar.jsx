@@ -59,6 +59,15 @@ const Navbar = () => {
                             </Link>
                         )}
 
+                        {isAuthenticated && role === 'volunteer' && (
+                            <Link to="/dashboard" className={navLinkClass('/dashboard')}>
+                                <div className="flex items-center gap-1.5">
+                                    <LayoutDashboard className="w-4 h-4" />
+                                    <span>Dashboard</span>
+                                </div>
+                            </Link>
+                        )}
+
                         {isAuthenticated && (
                             <Link to="/profile" className={navLinkClass('/profile')}>
                                 <div className="flex items-center gap-1.5">
@@ -132,6 +141,18 @@ const Navbar = () => {
                             onClick={() => setIsOpen(false)}
                             className={`block px-4 py-2.5 rounded-xl text-base font-semibold ${
                                 isActive('/admin') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                        >
+                            Dashboard
+                        </Link>
+                    )}
+
+                    {isAuthenticated && role === 'volunteer' && (
+                        <Link
+                            to="/dashboard"
+                            onClick={() => setIsOpen(false)}
+                            className={`block px-4 py-2.5 rounded-xl text-base font-semibold ${
+                                isActive('/dashboard') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
                             }`}
                         >
                             Dashboard

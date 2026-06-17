@@ -20,11 +20,7 @@ const adminSchema = new mongoose.Schema({
         enum:['volunteer','admin'],
         default:'admin'
     },
-    status: {
-    type: String,
-    enum: ['pending', 'approved', 'rejected', 'under-review'],
-    default: 'pending'
-}
+   
 })
 
 const Admin = mongoose.model('Admin',adminSchema)

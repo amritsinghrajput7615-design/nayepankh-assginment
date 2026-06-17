@@ -35,7 +35,13 @@ const volunteerSchema = new mongoose.Schema({
     },
     interests: {
         type: [String],
-        required: true,}
+        required: true,
+    },
+    applicationStatus: {
+        type: String,
+        enum: ['pending', 'selected', 'rejected'],
+        default: 'pending'
+    }
 });
 
 const Volunteer = mongoose.model('Volunteer', volunteerSchema);

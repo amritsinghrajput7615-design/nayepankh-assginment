@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
         const verifyAuth = async () => {
             if (token) {
                 // Set default authorization header
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 try {
                     // Fetch user profile based on role
                     if (role === 'admin') {
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
                         }
                     } else {
                         // Volunteer profile
-                        const res = await axios.get('/api/volunteers/profile');
+                        const res = await api.get('/volunteers/profile');
                         setUser(res.data.user);
                     }
                 } catch (error) {
@@ -48,8 +48,8 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password, loginRole) => {
         setLoading(true);
         try {
-            const url = loginRole === 'admin' ? '/api/admin/login' : '/api/volunteers/login';
-            const res = await axios.post(url, { email, password });
+            const url = loginRole === 'admin' ? '/admin/login' : '/volunteers/login';
+            const res = await api.post(url, { email, password });
             
             const { token: returnedToken, admin, volunteer, message } = res.data;
             const activeToken = returnedToken;
@@ -64,8 +64,8 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('role', loginRole);
             localStorage.setItem('user', JSON.stringify(activeUser));
 
-            // Set default axios header
-            axios.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
+            // Set default api header
+            api.defaults.headers.common['Authorization'] = `Bearer ${activeToken}`;
 
             setToken(activeToken);
             setRole(loginRole);
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         try {
             // Register route in backend: POST /volunteers/create
-            const res = await axios.post('/api/volunteers/create', volunteerData);
+            const res = await api.post('/volunteers/create', volunteerData);
             
             setLoading(false);
             return { 
@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
         localStorage.removeItem('user');
-        delete axios.defaults.headers.common['Authorization'];
+        delete api.defaults.headers.common['Authorization'];
         setToken(null);
         setRole(null);
         setUser(null);

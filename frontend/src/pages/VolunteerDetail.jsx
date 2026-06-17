@@ -18,6 +18,22 @@ const VolunteerDetail = () => {
     
     // Delete modal states
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    
+    // Status update states
+    const [updatingStatus, setUpdatingStatus] = useState(false);
+
+    const handleUpdateStatus = async (newStatus) => {
+        setUpdatingStatus(true);
+        try {
+            const res = await api.patch(`/volunteers/${id}/status`, { applicationStatus: newStatus });
+            setVolunteer(prev => ({ ...prev, applicationStatus: newStatus }));
+            addToast(res.data.message || `Status updated to ${newStatus} successfully!`, 'success');
+        } catch (error) {
+            addToast(error.response?.data?.message || 'Failed to update application status', 'error');
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
 
     useEffect(() => {
         const fetchVolunteerDetails = async () => {
@@ -144,6 +160,64 @@ const VolunteerDetail = () => {
                                     <Trash2 className="w-3.5 h-3.5" />
                                     <span>Delete Account</span>
                                 </button>
+                            </div>
+                        </div>
+
+                        {/* Status Control Panel */}
+                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-5 sm:p-6 space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Application Status</h3>
+                                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                                        {volunteer.applicationStatus === 'selected' ? (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black rounded-full uppercase tracking-wider">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Selected
+                                            </span>
+                                        ) : volunteer.applicationStatus === 'rejected' ? (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 text-rose-800 border border-rose-200 text-xs font-black rounded-full uppercase tracking-wider">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                Not Selected
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 border border-amber-200 text-xs font-black rounded-full uppercase tracking-wider">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                Pending Review
+                                            </span>
+                                        )}
+                                        <span className="text-xs text-slate-400 font-semibold">
+                                            (Click actions below to change status and notify candidate)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2.5">
+                                <button
+                                    onClick={() => handleUpdateStatus('selected')}
+                                    disabled={updatingStatus || volunteer.applicationStatus === 'selected'}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-100 text-white font-bold text-xs rounded-xl shadow-xs hover:shadow-md transition-all border border-transparent cursor-pointer"
+                                >
+                                    Select Volunteer
+                                </button>
+                                
+                                <button
+                                    onClick={() => handleUpdateStatus('rejected')}
+                                    disabled={updatingStatus || volunteer.applicationStatus === 'rejected'}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-100 text-white font-bold text-xs rounded-xl shadow-xs hover:shadow-md transition-all border border-transparent cursor-pointer"
+                                >
+                                    Reject Volunteer
+                                </button>
+
+                                {volunteer.applicationStatus && volunteer.applicationStatus !== 'pending' && (
+                                    <button
+                                        onClick={() => handleUpdateStatus('pending')}
+                                        disabled={updatingStatus}
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                                    >
+                                        Mark as Pending
+                                    </button>
+                                )}
                             </div>
                         </div>
 

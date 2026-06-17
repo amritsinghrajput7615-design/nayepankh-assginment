@@ -16,6 +16,7 @@ const VolunteerList = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSkill, setSelectedSkill] = useState('');
     const [selectedInterest, setSelectedInterest] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState('');
     
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,8 +77,9 @@ const VolunteerList = () => {
             
         const matchesSkill = !selectedSkill || (vol.skills && vol.skills.some(s => s.trim() === selectedSkill));
         const matchesInterest = !selectedInterest || (vol.interests && vol.interests.some(i => i.trim() === selectedInterest));
+        const matchesStatus = !selectedStatus || vol.applicationStatus === selectedStatus;
         
-        return matchesSearch && matchesSkill && matchesInterest;
+        return matchesSearch && matchesSkill && matchesInterest && matchesStatus;
     });
 
     return (
@@ -103,7 +105,7 @@ const VolunteerList = () => {
                         <span className="text-sm">Search and Filter Panel</span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         {/* Search Input */}
                         <div className="relative">
                             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
@@ -151,6 +153,23 @@ const VolunteerList = () => {
                                 <Filter className="w-3.5 h-3.5" />
                             </span>
                         </div>
+
+                        {/* Status Filter */}
+                        <div className="relative">
+                            <select
+                                value={selectedStatus}
+                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all appearance-none cursor-pointer"
+                            >
+                                <option value="">Filter by Status (All)</option>
+                                <option value="pending">Pending</option>
+                                <option value="selected">Selected</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                            <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 pointer-events-none">
+                                <Filter className="w-3.5 h-3.5" />
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -180,6 +199,25 @@ const VolunteerList = () => {
                                                 {vol.username}
                                             </h3>
                                             <p className="text-xs font-semibold text-slate-400 mt-1">{vol.email}</p>
+                                            
+                                            {/* Status Badge */}
+                                            <div className="mt-2 flex flex-wrap gap-1">
+                                                {vol.applicationStatus === 'selected' && (
+                                                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black rounded-md uppercase tracking-wider">
+                                                        Selected
+                                                    </span>
+                                                )}
+                                                {vol.applicationStatus === 'rejected' && (
+                                                    <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black rounded-md uppercase tracking-wider">
+                                                        Not Selected
+                                                    </span>
+                                                )}
+                                                {(!vol.applicationStatus || vol.applicationStatus === 'pending') && (
+                                                    <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black rounded-md uppercase tracking-wider">
+                                                        Pending Review
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 font-bold flex items-center justify-center uppercase shrink-0">
                                             {vol.username.charAt(0)}

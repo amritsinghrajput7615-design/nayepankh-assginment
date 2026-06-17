@@ -153,9 +153,89 @@ const updateProfile = async (req, res) => {
     }
 };
 
+const updateVolunteerStatus = async (req, res) => {
+    const { id } = req.params;
+    const { applicationStatus } = req.body;
+
+    if (!['pending', 'selected', 'rejected'].includes(applicationStatus)) {
+        return res.status(400).json({ message: 'Invalid status. Status must be pending, selected, or rejected.' });
+    }
+
+    try {
+        const volunteer = await Volunteer.findById(id);
+        if (!volunteer) {
+            return res.status(404).json({ message: 'Volunteer not found' });
+        }
+
+        volunteer.applicationStatus = applicationStatus;
+        await volunteer.save();
+
+        // Send Email Notification
+        let emailSubject = '';
+        let emailHtml = '';
+
+        if (applicationStatus === 'selected') {
+            emailSubject = 'Volunteer Application Status: Selected';
+            emailHtml = `
+                <h2>Hello ${volunteer.username},</h2>
+                <div style="font-family: Arial, sans-serif; font-size: 14px; color: #334155; line-height: 1.6;">
+                    <p>Congratulations! You have been selected as a volunteer at NayePankh Foundation.</p>
+                    <p>Our team will contact you shortly with further details.</p>
+                </div>
+                <br>
+                <p>Best regards,</p>
+                <p><strong>NayePankh Foundation Team</strong></p>
+            `;
+        } else if (applicationStatus === 'rejected') {
+            emailSubject = 'Volunteer Application Status Update';
+            emailHtml = `
+                <h2>Hello ${volunteer.username},</h2>
+                <div style="font-family: Arial, sans-serif; font-size: 14px; color: #334155; line-height: 1.6;">
+                    <p>Thank you for applying. Unfortunately, you were not selected at this time.</p>
+                    <p>We appreciate your interest in NayePankh Foundation and wish you the best in your future endeavors.</p>
+                </div>
+                <br>
+                <p>Best regards,</p>
+                <p><strong>NayePankh Foundation Team</strong></p>
+            `;
+        }
+
+        if (emailSubject && emailHtml) {
+            try {
+                await transporter.sendMail({
+                    from: process.env.EMAIL,
+                    to: volunteer.email,
+                    subject: emailSubject,
+                    html: emailHtml
+                });
+                console.log(`Notification email sent to ${volunteer.email} for status: ${applicationStatus}`);
+            } catch (emailError) {
+                console.error("Failed to send status update email:", emailError.message);
+            }
+        }
+
+        return res.status(200).json({
+            message: `Volunteer status updated successfully to ${applicationStatus}`,
+            volunteer: {
+                _id: volunteer._id,
+                username: volunteer.username,
+                email: volunteer.email,
+                applicationStatus: volunteer.applicationStatus
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: 'Error updating volunteer status',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createVolunteer,
     loginVolunteer,
     getProfile,
-    updateProfile
+    updateProfile,
+    updateVolunteerStatus
 }

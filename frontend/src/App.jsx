@@ -14,6 +14,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import VolunteerList from './pages/VolunteerList';
 import VolunteerDetail from './pages/VolunteerDetail';
 import EmailSending from './pages/EmailSending';
+import VolunteerDashboard from './pages/VolunteerDashboard';
 import NotFound from './pages/NotFound';
 
 const App = () => {
@@ -32,6 +33,16 @@ const App = () => {
                                 <Route path="/" element={<Home />} />
                                 <Route path="/login" element={<Login />} />
                                 <Route path="/register" element={<Register />} />
+
+                                {/* Volunteer Dashboard Route */}
+                                <Route 
+                                    path="/dashboard" 
+                                    element={
+                                        <ProtectedRoute allowedRoles={['volunteer']}>
+                                            <VolunteerDashboard />
+                                        </ProtectedRoute>
+                                    } 
+                                />
 
                                 {/* Volunteer & Admin Protected Profile */}
                                 <Route 
