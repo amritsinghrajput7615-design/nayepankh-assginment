@@ -1,45 +1,20 @@
 const Volunteer = require('../models/volunteer.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Resend } = require('resend');
 
-
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASSWORD
-  }
-});
-
-
-
-
-
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("SMTP ERROR:", error);
-  } else {
-    console.log("SMTP READY");
-  }
-});
-
-
-
-
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const createVolunteer = async (req, res) => {
     const { username, email, password, phone, role, skills, address, interests } = req.body;
 
-    try{
-        const isEmailExist = await Volunteer.findOne({email});
-        if(isEmailExist){
-            return res.status(400).json({message: 'Email already exists'});
+    try {
+        const isEmailExist = await Volunteer.findOne({ email });
+        if (isEmailExist) {
+            return res.status(400).json({ message: 'Email already exists' });
         }
 
-        const hashedPassword = await bcrypt.hash(password,10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const newVolunteer = await Volunteer.create({
             username,
@@ -50,21 +25,16 @@ const createVolunteer = async (req, res) => {
             skills,
             address,
             interests
-        })
-        
-        const token = jwt.sign({ id: newVolunteer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        });
 
+        const token = jwt.sign({ id: newVolunteer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
 
-return res.status(201).json({
-            message: 'Volunteer created successfully',
-             volunteer: newVolunteer});
-
         try {
-            await transporter.sendMail({
-                from: process.env.EMAIL,
+            await resend.emails.send({
+                from: 'NayePankh Foundation <onboarding@resend.dev>',
                 to: email,
-                subject: "Volunteer Registration Successful",
+                subject: 'Volunteer Registration Successful',
                 html: `
                     <h2>Hello ${username},</h2>
                     <p>Thank you for registering as a volunteer.</p>
@@ -72,53 +42,44 @@ return res.status(201).json({
                 `
             });
         } catch (emailError) {
-            console.error("Failed to send volunteer welcome email:", emailError.message);
+            console.error('Failed to send volunteer welcome email:', emailError.message);
         }
 
+        return res.status(201).json({
+            message: 'Volunteer created successfully',
+            volunteer: newVolunteer
+        });
 
-
-       
-
-
-        
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({message: 'Internal server error'});
-
-    }}
-
-
-const loginVolunteer = async (req,res)=>{
-    const {email, password} = req.body;
-
-    try{
-        const isEmailExist = await Volunteer.findOne({email});
-        if(!isEmailExist){
-            return res.status(400).json({message: 'Invalid email or password'});
-        }
-
-        const isPasswordVaild = await bcrypt.compare(password, isEmailExist.password);
-        if(!isPasswordVaild){
-            return res.status(400).json({message: 'Invalid email or password'});
-        }
-        const token = jwt.sign({ id: isEmailExist._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
-        return res.status(200).json({message: 'Login successful', token});
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({message: 'Internal server error'});
+        console.log(error);
+        return res.status(500).json({ message: 'Internal server error' });
     }
-}
+};
 
+const loginVolunteer = async (req, res) => {
+    const { email, password } = req.body;
 
+    try {
+        const isEmailExist = await Volunteer.findOne({ email });
+        if (!isEmailExist) {
+            return res.status(400).json({ message: 'Invalid email or password' });
+        }
 
+        const isPasswordValid = await bcrypt.compare(password, isEmailExist.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: 'Invalid email or password' });
+        }
 
+        const token = jwt.sign({ id: isEmailExist._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
 
+        return res.status(200).json({ message: 'Login successful', token });
 
-
-
-
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
 const getProfile = async (req, res) => {
     try {
@@ -143,7 +104,7 @@ const updateProfile = async (req, res) => {
         if (!req.user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+
         const updatedVolunteer = await Volunteer.findByIdAndUpdate(
             req.user._id,
             { username, phone, skills, address, interests },
@@ -179,7 +140,6 @@ const updateVolunteerStatus = async (req, res) => {
         volunteer.applicationStatus = applicationStatus;
         await volunteer.save();
 
-        // Send Email Notification
         let emailSubject = '';
         let emailHtml = '';
 
@@ -211,15 +171,15 @@ const updateVolunteerStatus = async (req, res) => {
 
         if (emailSubject && emailHtml) {
             try {
-                await transporter.sendMail({
-                    from: process.env.EMAIL,
+                await resend.emails.send({
+                    from: 'NayePankh Foundation <onboarding@resend.dev>',
                     to: volunteer.email,
                     subject: emailSubject,
                     html: emailHtml
                 });
                 console.log(`Notification email sent to ${volunteer.email} for status: ${applicationStatus}`);
             } catch (emailError) {
-                console.error("Failed to send status update email:", emailError.message);
+                console.error('Failed to send status update email:', emailError.message);
             }
         }
 
@@ -232,6 +192,7 @@ const updateVolunteerStatus = async (req, res) => {
                 applicationStatus: volunteer.applicationStatus
             }
         });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({
@@ -247,4 +208,4 @@ module.exports = {
     getProfile,
     updateProfile,
     updateVolunteerStatus
-}
+};
