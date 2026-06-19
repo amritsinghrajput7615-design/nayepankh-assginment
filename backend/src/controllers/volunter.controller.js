@@ -1,36 +1,7 @@
 const Volunteer = require('../models/volunteer.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-
-// Create reusable transporter using SMTP
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === 'true', // true for port 465, false for 587
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-});
-
-// Verify SMTP connection on startup
-transporter.verify((error) => {
-    if (error) {
-        console.error('SMTP connection error:', error.message);
-    } else {
-        console.log('SMTP server ready to send emails');
-    }
-});
-
-const sendEmail = async ({ to, subject, html }) => {
-    return transporter.sendMail({
-        from: `"NayePankh Foundation" <${process.env.SMTP_USER}>`,
-        to,
-        subject,
-        html,
-    });
-};
+const { sendEmail } = require('../utils/mailer');
 
 const createVolunteer = async (req, res) => {
     const { username, email, password, phone, role, skills, address, interests } = req.body;

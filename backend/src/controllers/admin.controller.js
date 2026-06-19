@@ -2,34 +2,7 @@ const Admin = require('../models/admin.model');
 const bcrypt = require('bcrypt');
 const Volunteer = require('../models/volunteer.model');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-});
-
-transporter.verify((error) => {
-    if (error) {
-        console.error('SMTP connection error:', error.message);
-    } else {
-        console.log('SMTP server ready to send emails');
-    }
-});
-
-const sendEmail = async ({ to, subject, html }) => {
-    return transporter.sendMail({
-        from: `"NayePankh Foundation" <${process.env.SMTP_USER}>`,
-        to,
-        subject,
-        html,
-    });
-};
+const { sendEmail } = require('../utils/mailer');
 
 const createAdmin = async (req, res) => {
     const { username, email, password, role } = req.body;
