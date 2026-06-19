@@ -1,12 +1,41 @@
 const Volunteer = require('../models/volunteer.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create reusable transporter using SMTP
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE === 'true', // true for port 465, false for 587
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
+
+// Verify SMTP connection on startup
+transporter.verify((error) => {
+    if (error) {
+        console.error('SMTP connection error:', error.message);
+    } else {
+        console.log('SMTP server ready to send emails');
+    }
+});
+
+const sendEmail = async ({ to, subject, html }) => {
+    return transporter.sendMail({
+        from: `"NayePankh Foundation" <${process.env.SMTP_USER}>`,
+        to,
+        subject,
+        html,
+    });
+};
 
 const createVolunteer = async (req, res) => {
     const { username, email, password, phone, role, skills, address, interests } = req.body;
+
+    console.log('1. createVolunteer hit');
 
     try {
         const isEmailExist = await Volunteer.findOne({ email });
@@ -14,36 +43,33 @@ const createVolunteer = async (req, res) => {
             return res.status(400).json({ message: 'Email already exists' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('2. Email does not exist, creating volunteer...');
 
+        const hashedPassword = await bcrypt.hash(password, 10);
         const newVolunteer = await Volunteer.create({
-            username,
-            email,
-            password: hashedPassword,
-            phone,
-            role,
-            skills,
-            address,
-            interests
+            username, email, password: hashedPassword,
+            phone, role, skills, address, interests
         });
+
+        console.log('3. Volunteer created:', newVolunteer._id);
 
         const token = jwt.sign({ id: newVolunteer._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict' });
 
+        console.log('4. About to send email to:', email);
+
         try {
-            await resend.emails.send({
-                from: 'NayePankh Foundation <onboarding@resend.dev>',
+            const result = await sendEmail({
                 to: email,
                 subject: 'Volunteer Registration Successful',
-                html: `
-                    <h2>Hello ${username},</h2>
-                    <p>Thank you for registering as a volunteer.</p>
-                    <p>We will review your application and contact you soon.</p>
-                `
+                html: `<h2>Hello ${username},</h2><p>Thank you for registering.</p>`
             });
+            console.log('5. Email sent:', result.messageId);
         } catch (emailError) {
-            console.error('Failed to send volunteer welcome email:', emailError.message);
+            console.error('5. Email error:', emailError.message);
         }
+
+        console.log('6. Returning response');
 
         return res.status(201).json({
             message: 'Volunteer created successfully',
@@ -51,7 +77,7 @@ const createVolunteer = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
+        console.log('ERROR:', error);
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -171,13 +197,12 @@ const updateVolunteerStatus = async (req, res) => {
 
         if (emailSubject && emailHtml) {
             try {
-                await resend.emails.send({
-                    from: 'NayePankh Foundation <onboarding@resend.dev>',
+                const result = await sendEmail({
                     to: volunteer.email,
                     subject: emailSubject,
                     html: emailHtml
                 });
-                console.log(`Notification email sent to ${volunteer.email} for status: ${applicationStatus}`);
+                console.log(`Notification email sent to ${volunteer.email} for status: ${applicationStatus}, messageId: ${result.messageId}`);
             } catch (emailError) {
                 console.error('Failed to send status update email:', emailError.message);
             }

@@ -2,9 +2,34 @@ const Admin = require('../models/admin.model');
 const bcrypt = require('bcrypt');
 const Volunteer = require('../models/volunteer.model');
 const jwt = require('jsonwebtoken');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
+
+transporter.verify((error) => {
+    if (error) {
+        console.error('SMTP connection error:', error.message);
+    } else {
+        console.log('SMTP server ready to send emails');
+    }
+});
+
+const sendEmail = async ({ to, subject, html }) => {
+    return transporter.sendMail({
+        from: `"NayePankh Foundation" <${process.env.SMTP_USER}>`,
+        to,
+        subject,
+        html,
+    });
+};
 
 const createAdmin = async (req, res) => {
     const { username, email, password, role } = req.body;
@@ -98,8 +123,7 @@ const mailVolunteer = async (req, res) => {
             });
         }
 
-        await resend.emails.send({
-            from: 'NayePankh Foundation <onboarding@resend.dev>',
+        await sendEmail({
             to: volunteer.email,
             subject: subject || 'Welcome to NayePankh Foundation',
             html: message ? `
@@ -122,6 +146,7 @@ const mailVolunteer = async (req, res) => {
         });
 
     } catch (error) {
+        console.log(error);
         res.status(500).json({
             message: 'Error sending email',
             error: error.message
