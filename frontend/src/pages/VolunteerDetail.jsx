@@ -5,7 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
-import { User, Mail, Phone, MapPin, Sparkles, Heart, Trash2, MailQuestion, ArrowLeft } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Sparkles, Heart, Trash2, MailQuestion, ArrowLeft, ClipboardList } from 'lucide-react';
 
 const VolunteerDetail = () => {
     const { id } = useParams();
@@ -152,6 +152,13 @@ const VolunteerDetail = () => {
                                             <span>Send Welcome Email</span>
                                         </>
                                     )}
+                                </button>
+                                <button
+                                    onClick={() => navigate('/admin/assign-task', { state: { id: volunteer._id } })}
+                                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-100 transition-all cursor-pointer"
+                                >
+                                    <ClipboardList className="w-3.5 h-3.5" />
+                                    <span>Assign Task</span>
                                 </button>
                                 <button
                                     onClick={() => setIsDeleteOpen(true)}

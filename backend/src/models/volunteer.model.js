@@ -41,7 +41,13 @@ const volunteerSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'selected', 'rejected'],
         default: 'pending'
-    }
+    },
+    assignedTask: {
+    title: { type: String },
+    description: { type: String },
+    deadline: { type: Date },
+    assignedAt: { type: Date }
+}
 });
 
 const Volunteer = mongoose.model('Volunteer', volunteerSchema);

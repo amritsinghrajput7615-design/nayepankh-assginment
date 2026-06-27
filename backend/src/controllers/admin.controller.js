@@ -2,7 +2,7 @@ const Admin = require('../models/admin.model');
 const bcrypt = require('bcrypt');
 const Volunteer = require('../models/volunteer.model');
 const jwt = require('jsonwebtoken');
-const { sendEmail } = require('../utils/mailer');
+const {sendEmail}  = require('../services/email.service');
 
 const createAdmin = async (req, res) => {
     const { username, email, password, role } = req.body;
@@ -164,11 +164,65 @@ const deleteVolunteer = async (req, res) => {
     }
 };
 
+
+const { generateTaskEmail } = require('../services/ai.service');
+
+const assignTask = async (req, res) => {
+    const { id } = req.params;
+    const { title, description, deadline } = req.body;
+
+    if (!title || !description || !deadline) {
+        return res.status(400).json({ message: 'title, description and deadline are required' });
+    }
+
+    try {
+        const volunteer = await Volunteer.findById(id);
+        if (!volunteer) {
+            return res.status(404).json({ message: 'Volunteer not found' });
+        }
+
+        // Save task to volunteer
+        volunteer.assignedTask = { title, description, deadline, assignedAt: new Date() };
+        await volunteer.save();
+
+        // Generate email via Claude
+        const emailHtml = await generateTaskEmail({
+            volunteerName: volunteer.username,
+            taskTitle: title,
+            taskDescription: description,
+            deadline
+        });
+
+        // Send email
+        await sendEmail({
+            to: volunteer.email,
+            subject: `Task Assigned: ${title}`,
+            html: emailHtml
+        });
+
+        console.log(`AI-generated task email sent to ${volunteer.email}`);
+
+        return res.status(200).json({
+            message: 'Task assigned and email sent successfully',
+            task: volunteer.assignedTask
+        });
+
+    } catch (error) {
+        console.error('assignTask error:', error);
+        return res.status(500).json({
+            message: 'Error assigning task',
+            error: error.message
+        });
+    }
+};
+
+
+
 module.exports = {
     createAdmin,
     loginAdmin,
     getAllVolunteers,
     mailVolunteer,
     getVolunteerById,
-    deleteVolunteer
+    deleteVolunteer,assignTask
 };
