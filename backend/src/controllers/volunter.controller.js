@@ -1,7 +1,7 @@
 const Volunteer = require('../models/volunteer.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sendEmail } = require('../utils/mailer');
+const { sendEmail } = require('../services/email.service');
 
 const createVolunteer = async (req, res) => {
     const { username, email, password, phone, role, skills, address, interests } = req.body;

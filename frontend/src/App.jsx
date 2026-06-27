@@ -14,6 +14,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import VolunteerList from './pages/VolunteerList';
 import VolunteerDetail from './pages/VolunteerDetail';
 import EmailSending from './pages/EmailSending';
+import AssignTask from './pages/AssignTask';
 import VolunteerDashboard from './pages/VolunteerDashboard';
 import NotFound from './pages/NotFound';
 
@@ -84,6 +85,14 @@ const App = () => {
                                     element={
                                         <ProtectedRoute allowedRoles={['admin']}>
                                             <EmailSending />
+                                        </ProtectedRoute>
+                                    } 
+                                />
+                                <Route 
+                                    path="/admin/assign-task" 
+                                    element={
+                                        <ProtectedRoute allowedRoles={['admin']}>
+                                            <AssignTask />
                                         </ProtectedRoute>
                                     } 
                                 />

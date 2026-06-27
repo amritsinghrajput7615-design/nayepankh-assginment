@@ -12,4 +12,7 @@ router.get('/volunteers/:id', authenticateJWT, isAdmin, adminController.getVolun
 router.delete('/volunteers/:id', authenticateJWT, isAdmin, adminController.deleteVolunteer)
 router.post('/mail-volunteer', authenticateJWT, isAdmin, adminController.mailVolunteer)
 
+
+router.post('/volunteers/:id/assign-task', authenticateJWT, isAdmin, adminController.assignTask);
+
 module.exports = router
